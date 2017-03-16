@@ -10,7 +10,7 @@ import matplotlib
 matplotlib.rcParams.update({'font.size': 9})
 
 
-eachStock = 'TSLA'
+eachStock = 'GPRO'
 
 def movingaverage(values, window):
 	weights = np.repeat(1.0, window) / window
@@ -19,7 +19,27 @@ def movingaverage(values, window):
 
 def graphData(stock, MA1, MA2):
 	try:
-		stockFile = stock + '.txt'
+		try:
+			print('Pulling data on', stock)
+			urlToVisit = 'http://chartapi.finance.yahoo.com/instrument/1.0/'+stock+'/chartdata;type=quote;range=3y/csv'
+			stockFile = []
+			try:
+				sourceCode = urllib.request.urlopen(urlToVisit).read().decode('utf-8')
+				splitSource= sourceCode.split('\n')
+				for eachLine in splitSource:
+					splitLine = eachLine.split(',')
+					if len(splitLine) == 6:
+						if 'values' not in eachLine:
+							stockFile.append(eachLine)
+
+
+			except Exception as e:
+				print(str(e), 'Failed to orginize pulled data')
+
+
+
+		except Exception as e:
+			print(str(e), 'failed to pull price data')
 		
 		date, closep, highp, lowp, openp, volume = np.loadtxt(stockFile, delimiter=',', unpack=True,
 												   converters = {0: mdates.bytespdate2num('%Y%m%d')})
@@ -48,10 +68,6 @@ def graphData(stock, MA1, MA2):
 		ax1.plot(date[-SP:], Av1[-SP:], 'red', label = label1, linewidth=1.5)
 		ax1.plot(date[-SP:], Av2[-SP:])
 
-		# ax1.plot(date2, openp)
-		# ax1.plot(date2, highp)
-		# ax1.plot(date2, lowp)
-		# ax1.plot(date2, closep)
 		plt.ylabel('Stock price')
 		plt.legend(loc=3, fancybox=True, prop={'size':7})
 		ax1.grid(True, color='w', ls='dotted')
@@ -64,7 +80,6 @@ def graphData(stock, MA1, MA2):
 		ax1.spines['right'].set_color('#5998ff')
 		ax1.tick_params(axis='y', colors='w')
 
-		# volumeMin = volume.min()
 		volumeMin = 0
 
 		ax2 = plt.subplot2grid((5,4), (4,0), sharex=ax1, rowspan=1, colspan=4, facecolor='#07000d')
@@ -80,23 +95,14 @@ def graphData(stock, MA1, MA2):
 		ax2.tick_params(axis='x', colors='w')
 		ax2.tick_params(axis='y', colors='w')
 
-
-
-
-
-
-
 		for label in ax1.xaxis.get_ticklabels():
 			label.set_rotation(90)
-
 
 		for label in ax2.xaxis.get_ticklabels():
 			label.set_rotation(45)
 
-
 		plt.subplots_adjust(left=.10, bottom=.14, right=.94, top=.95, wspace=.20, hspace=.07)
 
-		
 		plt.suptitle(stock + ' Stock Price', color='w')
 
 		plt.setp(ax1.get_xticklabels(), visible=False)
